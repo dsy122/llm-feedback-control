@@ -87,16 +87,3 @@ extraction catching a hallucinated value.
 For the change history, see the **[Changelog](CHANGELOG.md)**; for the short version
 of all this, the **[project README](../README.md)**; and for the code itself, the
 **[repository](https://github.com/pcoz/llm-feedback-control)**.
-
-## The two principles that matter
-
-The first is the analogy that gives the project its name: **the model is the
-amplifier, and the deterministic code is the feedback network around it.** You trade
-a little of the model's raw gain — its fluency — for precision, stability, and
-auditability, which is exactly the bargain an operational amplifier makes.
-
-The second is the one that does the real work: **refusal is a feature, not a
-failure.** A system that can say "this input isn't something I can verify" is more
-useful than one that answers regardless, because you can trust the answers it does
-give. Refusal is what keeps the loop honest — and it is explained in full in
-[How it works](manual/02-how-it-works.md).
