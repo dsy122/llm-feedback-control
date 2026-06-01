@@ -299,13 +299,6 @@ hallucinated by reading it back out of the text, and **refuses** when a required
 field is genuinely absent. (Constrained-decoding libraries guarantee output *shape*
 but not *truth*; cloud OCR doesn't check against your schema. This does both.)
 
-## Origin
-
-This project is the practical, validated spin-off of an internal research
-investigation. The investigation's grander mathematical claims did not hold up
-under measurement; this engineering architecture — LLM feedback control with
-refusal-as-stabilizer — is the part that did. It stands on its own.
-
 ## License
 
 MIT with an attribution clause — see [`LICENSE`](LICENSE).
