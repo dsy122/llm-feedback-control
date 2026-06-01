@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2] — 2026-06-01
+
+Documentation only — no code changes.
+
+- README: title is now "LLM Feedback Control"; the tagline is a proper sentence
+  ("Get reliable, checkable structured data …").
+- Rewrote the manual front page (`docs/index.md`) as prose rather than a link list.
+
 ## [0.2.1] — 2026-06-01
 
 Documentation only — no code changes.
