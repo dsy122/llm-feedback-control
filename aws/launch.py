@@ -69,7 +69,7 @@ def upload_code(args):
         for d in ('src', 'experiments'):
             dp = PROJECT_DIR / d
             if dp.exists(): tar.add(dp, arcname=d, filter=skip)
-        for extra in ('pyproject.toml', 'requirements.txt', 'README.md', 'LICENSE'):
+        for extra in ('pyproject.toml', 'README.md', 'LICENSE'):
             fp = PROJECT_DIR / extra
             if fp.exists(): tar.add(fp, arcname=extra)
     buf.seek(0)

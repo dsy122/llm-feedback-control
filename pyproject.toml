@@ -55,7 +55,7 @@ dev = ["pytest>=7.0", "build>=1.0", "twine>=4.0"]
 Homepage  = "https://github.com/pcoz/llm-feedback-control"
 Repository = "https://github.com/pcoz/llm-feedback-control"
 Issues    = "https://github.com/pcoz/llm-feedback-control/issues"
-Changelog = "https://github.com/pcoz/llm-feedback-control/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/pcoz/llm-feedback-control/blob/main/docs/CHANGELOG.md"
 
 [project.scripts]
 lfc = "llm_feedback_control.__main__:main"

@@ -7,6 +7,40 @@ by wrapping it in ordinary deterministic code.**
 
 ---
 
+## The problem this solves
+
+Large language models — the technology behind ChatGPT and similar tools — are
+brilliant at reading plain English and writing fluent, confident answers. But they
+have a well-known flaw: **they make things up, and they sound exactly as sure when
+they're wrong as when they're right.**
+
+That flaw bites hardest when you ask a model to pull *structure* out of text — the
+steps of a process, the states of a workflow, the fields of a form. It will get
+most of it right, then quietly invent a step that isn't there, or drop one that is.
+For anything you actually need to rely on, "usually right, never tells you when it
+isn't" is not good enough.
+
+This library fixes that for one specific, very common job: **turning a described
+process into a structured, machine-readable form you can trust.** It does this by
+pairing the language model with ordinary, deterministic code that:
+
+- **double-checks** the model's answer against provable facts,
+- **fills in** anything the model missed, by asking again with the gaps pointed out,
+- and, crucially, **says "I'm not sure" instead of guessing** when it can't verify
+  the result.
+
+The payoff: a *small* model you can run for free on your own laptop becomes
+reliable enough to use, because the **checking** — not the model's size — is doing
+the heavy lifting. (In our tests a 3.8B model wrapped this way matches a model about
+seven times larger; see [results](#whats-measured-so-far).)
+
+**Who it's for:** anyone who needs dependable structured output — workflow and
+state-machine extraction, process auditing, config parsing — from an LLM, without
+paying for a giant model or a cloud API, and without silently trusting a guess.
+
+If you just want to try it, jump to [Quickstart](#quickstart-works-with-no-model).
+To see exactly what it produces, read on.
+
 ## What it actually does
 
 You hand it a process written in plain English:
@@ -154,6 +188,7 @@ clean corpus (it's brittle on deliberately *mixed* inputs — an open problem).
 | [`docs/results.md`](docs/results.md) | the measured results, method, and honest scope |
 | [`docs/api.md`](docs/api.md) | reference for every public function |
 | [`docs/faq.md`](docs/faq.md) | "do I need a GPU?", "what models?", "does it work offline?" … |
+| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | release history |
 
 ## Repository layout
 
