@@ -1,0 +1,12 @@
+# Core (the experiments): pure-Python + these two.
+networkx>=3.0
+numpy>=1.24
+
+# The LLM client (llm.py) uses only the standard library (urllib) to talk to
+# a local Ollama server and/or the OpenAI API — no SDK needed.
+#
+# External requirement (not pip): Ollama (https://ollama.com) with a small
+# model pulled, e.g.:  ollama pull phi3:mini
+#
+# The aws/ tooling (optional, for running a large ceiling model on EC2) needs
+# boto3 — install separately:  pip install boto3
