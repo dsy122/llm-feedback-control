@@ -1,6 +1,6 @@
 # LLM Feedback Control
 
-**Reliable, checkable structured data out of a small, local language model — by
+**Get reliable, checkable structured data out of a small, local language model — by
 wrapping it in deterministic feedback.**
 
 [![CI](https://github.com/pcoz/llm-feedback-control/actions/workflows/ci.yml/badge.svg)](https://github.com/pcoz/llm-feedback-control/actions/workflows/ci.yml)
