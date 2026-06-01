@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1] — 2026-06-01
+
+Documentation only — no code changes.
+
+- Restructured the docs into a proper **user manual** under `docs/manual/`
+  (getting-started, how-it-works, api-reference, results, faq) with the index at
+  `docs/index.md`, plus a new **worked-examples** chapter with actual run
+  transcripts.
+- Slimmed the README to *what the repo does* + links into the manual; moved the
+  quickstart, architecture, results, and repo-layout detail into the manual.
+- Removed the README "Origin" section.
+
 ## [0.2.0] — 2026-06-01
 
 Feature release: a second extraction target and a public, injectable engine.
