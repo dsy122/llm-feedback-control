@@ -170,3 +170,32 @@ instrument.
 - It helps on the **structured, verifiable slice** of what LLMs do — workflows,
   state machines, configs — where a deterministic reference exists. Where there's
   nothing to check against, the gate correctly refuses to claim exactness.
+
+## 7. Generalising beyond workflows
+
+Nothing in §§3–5 is specific to state machines. The gate, the schema-validated
+extraction, the gap-filling loop, and the refusal clamp are all general; only the
+**extraction target** and the **deterministic reference** are workflow-specific in
+the shipped instantiation.
+
+Point the engine at a new target by supplying two things:
+
+1. **a target schema** — the shape you want out (fields, records, triples, …);
+2. **a deterministic reference** — cheap, model-free code that reports *what is
+   missing or wrong* given the text and a candidate answer. The workflow reference
+   is "graph coverage of mentioned states" (`consistency_gaps`); a form reference
+   is "required fields present + valid + actually found in the source text".
+
+The reference is the crux. It determines whether the loop can converge **and**
+whether the engine helps at all: the payoff is large exactly where the reference is
+cheap and independent of the model, and the gate refuses where no such reference
+exists. A **form-field** instantiation built on this same loop (schema + regex
+detectors for emails, dates, money, phones, custom patterns) demonstrates the
+generality: it verifies each extracted value against the source document, recovers a
+hallucinated value by reading it back out of the text, and refuses on a genuinely
+missing required field — the same three behaviours as the workflow auditor, with a
+different reference.
+
+The clean way to expose this in code is to make the reference and extractor
+**injectable** (the LLM backend already is, via `generate=`); then a new target is
+"bring a schema + a reference", not a fork.

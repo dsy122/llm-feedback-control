@@ -20,9 +20,12 @@ most of it right, then quietly invent a step that isn't there, or drop one that 
 For anything you actually need to rely on, "usually right, never tells you when it
 isn't" is not good enough.
 
-This library fixes that for one specific, very common job: **turning a described
-process into a structured, machine-readable form you can trust.** It does this by
-pairing the language model with ordinary, deterministic code that:
+This library fixes that for a whole class of jobs: **turning free text into
+structured data you can trust.** The version you `pip install` today ships one
+fully-worked, measured example — turning a described *process* into a state machine —
+and the same engine generalises to other targets (form fields, records, entities);
+see [Extending to other targets](#extending-to-other-targets). It works by pairing
+the language model with ordinary, deterministic code that:
 
 - **double-checks** the model's answer against provable facts,
 - **fills in** anything the model missed, by asking again with the gaps pointed out,
@@ -55,7 +58,9 @@ To see exactly what it produces, read on.
 
 ## What it actually does
 
-You hand it a process written in plain English:
+The package ships one fully-worked instantiation — **workflow / process
+extraction** — which is the running example throughout. You hand it a process
+written in plain English:
 
 > "A claim enters Intake. From Intake it goes to Triage. Triage goes to FastTrack
 > or to Investigation. FastTrack goes to Payout. Investigation goes to Payout or
@@ -230,6 +235,42 @@ tests/                      deterministic tests (no model / no network)
   gate (correctly) refuses to claim exactness.
 - **Results are indicative.** Small corpora; treat the numbers as direction, not
   guarantees.
+
+## Extending to other targets
+
+Workflow extraction is the *worked example*, not the limit. Underneath it is a
+general engine for reliable structured extraction:
+
+> extract with the LLM → **check the result against a deterministic reference** →
+> re-ask to fill the gaps → **refuse** when it can't be verified.
+
+To point it at a new kind of target you supply two things:
+
+1. **a target schema** — what fields/shape you want out;
+2. **a deterministic reference** — cheap code that, without the LLM, says *what's
+   missing or wrong*. This is the part that makes the loop converge, and it's the
+   part that decides whether the engine helps: **it pays off exactly where you can
+   write such a reference.**
+
+For the shipped workflow instantiation, the reference is "does the graph cover
+every state the text mentions?". Swap it and the same loop handles other targets:
+
+- **form fields** (against a field schema + format/required-field rules),
+- **records / tables** (against a known column set + types),
+- **entities / relations** (against a gazetteer or pattern set),
+- **configs / specs** (against a schema or grammar).
+
+This isn't hypothetical: a **form-field** instantiation has been prototyped on the
+same loop, with the reference being a field schema plus independent regex detectors
+(email, date, currency, phone, custom patterns). It does what constrained-decoding
+libraries (which guarantee output *shape* but not *truth*) and cloud OCR do not:
+it **verifies each value against the source text**, **recovers** a value the model
+hallucinated by reading it back out of the document, and **refuses** when a required
+field is genuinely absent rather than inventing one. On a small local model it
+lifted per-field accuracy and refused correctly on a missing-field case.
+
+Where no deterministic reference exists (open-ended summarising, sentiment, theme
+extraction), the engine **refuses to claim exactness** — by design, not by accident.
 
 ## Origin
 

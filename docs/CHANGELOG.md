@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.1.2] — 2026-06-01
+
+Documentation only — no code changes.
+
+- Reframed the README and docs to lead with the **general engine** (reliable
+  structured extraction from free text) rather than only workflow auditing, which
+  is now presented as the shipped *worked instantiation*. The earlier framing
+  undersold the architecture's generality.
+- New "Extending to other targets" section (README) and "Generalising beyond
+  workflows" (`docs/architecture.md` §7): a new target = a schema + a deterministic
+  reference; the LLM backend is already injectable. Cites a form-field
+  instantiation built on the same loop (verify-against-source, recover hallucinated
+  values, refuse on missing required fields) as evidence the engine generalises.
+
 ## [0.1.1] — 2026-06-01
 
 Documentation / packaging only — no code changes.
