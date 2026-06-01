@@ -1,4 +1,4 @@
-"""auditor.py — the LLM-feedback-control pipeline, end-to-end and self-contained.
+"""The LLM-feedback-control pipeline, end-to-end and self-contained.
 
 A small LLM is wrapped in a deterministic feedback network so the system knows
 what it can compute exactly, does so, and refuses the rest:
@@ -15,19 +15,20 @@ This is the NEGATIVE-feedback half (gate / ground / refuse). The bounded
 POSITIVE-feedback loop (iterate-to-fixed-point re-extraction) lives in
 feedback.py.
 
-Demos three milestones:
+Every entry point that can use an LLM takes an injectable ``generate`` callable
+(``f(prompt, fmt=None) -> str``); it defaults to the local-Ollama client in
+``llm.py``. If no model is reachable, the pipeline degrades to the deterministic
+path automatically — so ``run_audit`` returns a real result with no model at all.
+
+Demos (run ``python -m llm_feedback_control.auditor``):
   M1  process auditor on a real workflow (exact trace + grounded report)
   M2  gate refusal on belief/continuous input ("model-only, refused")
   M3  non-injective readout refusal (the no-hallucinated-synthesis guard)
-
-Plus a HARDENING test of the gate on deliberately ambiguous / mixed inputs.
-
-The LLM client is shared (llm.py); set LFC_MODEL / OLLAMA_HOST to point at any
-local Ollama model.  Run:  python auditor.py
+plus a HARDENING test of the gate on deliberately ambiguous / mixed inputs.
 """
 import sys, json, re
 
-from llm import gen
+from .llm import gen
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -68,7 +69,7 @@ def graph_facts(states, trans):
     out = {s: [b for a, b in trans if a == s] for s in states}
     terminals = sorted(s for s in states if not out.get(s))
     start = states[0] if states else None
-    seen = set();
+    seen = set()
     if start is not None:
         stack = [start]; seen = {start}
         while stack:
@@ -132,7 +133,13 @@ def gate_heuristic(text):
     return fin, cont
 
 
-def regime_gate(text, use_llm=True):
+def regime_gate(text, use_llm=True, generate=None):
+    """Route text into "finite_structural", "model_only", or "mixed".
+
+    Clear cases are decided by a cheap heuristic; only genuinely ambiguous cases
+    consult the LLM (``generate`` or the default Ollama client). With no model
+    reachable the LLM tie-break is skipped and the heuristic decides."""
+    g = generate or gen
     fin, cont = gate_heuristic(text)
     margin = abs(fin - cont)
     # clear cases: decide by heuristic
@@ -142,11 +149,11 @@ def regime_gate(text, use_llm=True):
     # ambiguous / mixed: ask the LLM to adjudicate
     if use_llm:
         try:
-            raw = gen('Classify the description into exactly one label: '
-                      '"finite_structural" (a finite set of states and transitions), '
-                      '"model_only" (continuous/probabilistic/belief-driven, no finite state machine), '
-                      'or "mixed" (both). Return JSON {{"label": "..."}}. '
-                      f'Description: "{text}"', fmt="json")
+            raw = g('Classify the description into exactly one label: '
+                    '"finite_structural" (a finite set of states and transitions), '
+                    '"model_only" (continuous/probabilistic/belief-driven, no finite state machine), '
+                    'or "mixed" (both). Return JSON {"label": "..."}. '
+                    f'Description: "{text}"', fmt="json")
             label = json.loads(raw).get("label", "").strip()
             if label in ("finite_structural", "model_only", "mixed"):
                 return dict(verdict=label, reason=f"LLM tie-break (fin={fin},cont={cont})", source="llm")
@@ -175,14 +182,25 @@ def fallback_extract(text):
         if c: st.add(c); tr.add((a, c))
     for m in re.finditer(r"(?:enters|starts in|opens in)\s+([A-Z][A-Za-z0-9]+)", text):
         st.add(m.group(1))
-    return {"states": sorted(st), "transitions": [list(t) for t in sorted(tr)]}
+    # Order states by FIRST APPEARANCE in the text, not alphabetically: the graph
+    # analysis treats states[0] as the start, so "start = first state mentioned"
+    # must hold (this matches how an LLM lists them in narrative order).
+    first = {}
+    for m in re.finditer(r"[A-Z][A-Za-z0-9]+", text):
+        first.setdefault(m.group(0), len(first))
+    states = sorted(st, key=lambda s: first.get(s, len(first)))
+    return {"states": states, "transitions": [list(t) for t in sorted(tr)]}
 
 
-def extract_workflow(text):
+def extract_workflow(text, generate=None):
+    """Extract a finite state machine: LLM (schema-validated) with a
+    deterministic regex fallback. Returns ``(graph, how)`` where how is
+    "llm" or "fallback"."""
+    g = generate or gen
     try:
-        raw = gen('Extract the finite state machine. Return ONLY JSON '
-                  '{{"states":[...],"transitions":[["FROM","TO"],...]}} using exact state '
-                  f'names from the text. Text: "{text}"', fmt="json")
+        raw = g('Extract the finite state machine. Return ONLY JSON '
+                '{"states":[...],"transitions":[["FROM","TO"],...]} using exact state '
+                f'names from the text. Text: "{text}"', fmt="json")
         o = json.loads(raw)
         if valid(o) and o["states"]:
             return o, "llm"
@@ -192,7 +210,8 @@ def extract_workflow(text):
 
 
 # === grounded report ======================================================
-def grounded_report(states, trace, llm=True):
+def grounded_report(states, trace, llm=True, generate=None):
+    g = generate or gen
     facts = trace["facts"]
     bad = [pp["prime"] for pp in trace["primes"] if pp["bad_prime"]]
     noninj = [pp["prime"] for pp in trace["primes"] if not pp["readout_injective"]]
@@ -207,29 +226,32 @@ def grounded_report(states, trace, llm=True):
     english = ""
     if llm:
         try:
-            english = gen("Write two plain sentences describing this process using ONLY "
-                          "these verified facts. Name only the listed states; invent nothing.\n"
-                          + deterministic).strip()
+            english = g("Write two plain sentences describing this process using ONLY "
+                        "these verified facts. Name only the listed states; invent nothing.\n"
+                        + deterministic).strip()
         except Exception:
             english = "(LLM rewrite unavailable; deterministic facts above are authoritative.)"
     return deterministic, english
 
 
 # === end-to-end audit =====================================================
-def run_audit(text, verbose=True):
-    gate = regime_gate(text)
+def run_audit(text, verbose=True, generate=None):
+    """Full pipeline: gate -> extract -> exact analysis -> grounded report,
+    with explicit refusals. Works with no model (deterministic fallback);
+    pass ``generate`` to use a specific LLM backend."""
+    gate = regime_gate(text, generate=generate)
     out = {"text": text, "gate": gate}
     if gate["verdict"] == "model_only":
         out["result"] = "REFUSED: model-only regime; no exact finite-structural analysis."
         return out
-    graph, how = extract_workflow(text)
+    graph, how = extract_workflow(text, generate=generate)
     out["extraction"] = {"via": how, "states": graph["states"], "transitions": graph["transitions"]}
     if not graph["states"]:
         out["result"] = "REFUSED: no finite structure could be extracted."
         return out
     trace = exact_analysis(graph["states"], [tuple(t) for t in graph["transitions"]])
     out["trace"] = trace
-    det, eng = grounded_report(graph["states"], trace, llm=True)
+    det, eng = grounded_report(graph["states"], trace, llm=True, generate=generate)
     out["report_facts"] = det
     out["report_english"] = eng
     out["result"] = "OK" + (" (mixed: finite part analysed, continuous part deferred)"
@@ -303,9 +325,13 @@ def test_gate_hard():
     print(f"\n  heuristic-only accuracy: {h_ok}/{len(corpus)}   hybrid(LLM) accuracy: {hyb_ok}/{len(corpus)}")
 
 
-if __name__ == "__main__":
+def main():
     demo_M1()
     demo_M2()
     demo_M3()
     test_gate_hard()
     print("\n(all stages self-contained; nothing imported from any external solver)")
+
+
+if __name__ == "__main__":
+    main()

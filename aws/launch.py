@@ -63,10 +63,13 @@ def ensure_bucket(s3):
 def upload_code(args):
     s3 = boto3.client('s3', region_name=REGION); ensure_bucket(s3)
     buf = io.BytesIO()
+    skip = lambda ti: None if '__pycache__' in ti.name or ti.name.endswith('.pyc') else ti
     with tarfile.open(fileobj=buf, mode='w:gz') as tar:
-        for p in PROJECT_DIR.glob('*.py'):
-            tar.add(p, arcname=p.name)
-        for extra in ('requirements.txt', 'README.md'):
+        # package source + the repro experiments, preserving the directory layout
+        for d in ('src', 'experiments'):
+            dp = PROJECT_DIR / d
+            if dp.exists(): tar.add(dp, arcname=d, filter=skip)
+        for extra in ('pyproject.toml', 'requirements.txt', 'README.md', 'LICENSE'):
             fp = PROJECT_DIR / extra
             if fp.exists(): tar.add(fp, arcname=extra)
     buf.seek(0)
@@ -132,7 +135,6 @@ export HOME=/home/ubuntu; cd /home/ubuntu
 sleep 10
 apt-get update -qq
 apt-get install -y -qq python3-pip awscli curl tmux
-pip3 install -q networkx numpy
 echo "Installing Ollama..."
 curl -fsSL https://ollama.com/install.sh | sh
 systemctl enable ollama; systemctl start ollama
@@ -163,7 +165,10 @@ echo "Fetching code from S3..."
 aws s3 cp s3://$BUCKET/{CODE_KEY} /tmp/code.tar.gz
 mkdir -p /home/ubuntu/llm-feedback-control
 tar -xzf /tmp/code.tar.gz -C /home/ubuntu/llm-feedback-control
+echo "Installing the package (zero deps)..."
+pip3 install -q /home/ubuntu/llm-feedback-control
 echo "Models available:"; ollama list
+echo "Run an experiment, e.g.:  python3 /home/ubuntu/llm-feedback-control/experiments/hard_corpus.py"
 echo "=== setup complete ==="
 P2
 chmod +x /home/ubuntu/setup.sh; chown ubuntu:ubuntu /home/ubuntu/setup.sh

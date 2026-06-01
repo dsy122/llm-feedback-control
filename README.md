@@ -1,97 +1,188 @@
 # llm-feedback-control
 
-**Wrap a small, local LLM in a deterministic feedback network so it knows what
-it can compute exactly, does so, and refuses the rest.**
+**Get reliable, checkable structured output from a small, local language model —
+by wrapping it in ordinary deterministic code.**
 
-The governing analogy is an operational amplifier. A raw LLM is a high-gain,
-open-loop device: enormous fluency, but open-loop it drifts and hallucinates.
-Close the loop with a deterministic reference and you trade some raw gain for
-**precision, stability, and auditability** — a precision instrument instead of
-a railing amplifier.
+[![CI](https://github.com/pcoz/llm-feedback-control/actions/workflows/ci.yml/badge.svg)](https://github.com/pcoz/llm-feedback-control/actions/workflows/ci.yml)
 
-- **Negative feedback** — a *regime gate* (route the exactly-computable part to
-  a deterministic engine, keep the genuinely-fuzzy part in the LLM), exact
-  analysis, schema validation, and explicit **refusal** (out-of-regime input,
-  non-injective readouts) → stabilises and grounds the output.
-- **Positive feedback** — a bounded *regenerative loop*: re-extract to a
-  text↔graph **fixed point**, recovering completeness the one-shot pass missed.
-  Positive feedback is where capability *and* instability both live, so it is
-  bounded by a deterministic consistency reference + a **refusal clamp** on
-  non-convergence. **Refusal-as-stabilizer** is the principle that makes the
-  regenerative loop safe.
+---
 
-**Why it matters:** this lets you get **higher-quality, auditable structured
-output from a *small* model** — trading a few extra passes (latency) for
-accuracy, with no extra parameters, no special mathematics, and no cloud. It
-runs entirely on a laptop with a local Ollama model.
+## What it actually does
 
-## What's measured so far (indicative; small corpora, a 3.8B local model)
+You hand it a process written in plain English:
 
-| question | result |
-|---|---|
-| Can a small model extract a finite transition system? | states P/R ≈ **1.00 / 0.92**, transitions **0.93 / 0.96** (valid JSON every call) |
-| Does the regime gate refuse continuous/belief input? | **1.00** precision/recall on a clean corpus (brittle on ambiguous "mixed" cases — open) |
-| Do grounded reports hallucinate less than plain? | directional: fewer unsupported entities |
-| Does the feedback loop raise small-model quality? | states F1 **0.96 → 1.00**, recovers dropped branches; converges to a fixed point |
+> "A claim enters Intake. From Intake it goes to Triage. Triage goes to FastTrack
+> or to Investigation. FastTrack goes to Payout. Investigation goes to Payout or
+> to Denied. Payout goes to Closed. Denied goes to Closed."
 
-These are honest first results, not benchmarks. The gate's "mixed" detection and
-the magnitude of the small-vs-big uplift on *harder* inputs are open (see
-`hard_corpus.py`).
+and it:
 
-## Files
+1. **turns that into a state machine** — the steps (states) and the arrows between
+   them (transitions);
+2. **computes provable facts** about it — which steps are dead ends, whether
+   there are loops, which steps can't be reached from the start;
+3. **writes a report where every statement is backed by one of those checked
+   facts** — so it can't quietly make things up;
+4. **knows its own limits.** If the text isn't actually a finite step-by-step
+   process (e.g. *"prices drift up as confidence grows"*), it **refuses** instead
+   of inventing a fake state machine. And if the model's first pass missed part of
+   the process, it **loops to fill the gaps** — or refuses if it can't.
 
-| file | what it is |
-|---|---|
-| `llm.py` | shared client: a local Ollama small model (`gen`) + an optional stronger "ceiling" model (`gen_ceiling`, local or OpenAI). All env-configurable. |
-| `auditor.py` | the negative-feedback pipeline: extract → gate → exact analysis → readout/refuse → grounded report. Demos M1 (audit), M2 (gate refusal), M3 (non-injective-readout refusal) + a gate-hardening test. |
-| `feedback.py` | the bounded **positive-feedback** loop: regenerative re-extraction to a fixed point, clamped by a deterministic consistency reference + refusal. |
-| `prototype_test.py` | the three open-question tests (extraction / gate / grounding). |
-| `quality_uplift.py` | open-loop vs closed-loop F1 on the small model. |
-| `hard_corpus.py` | small open vs closed vs a bigger ceiling model on messy inputs; reports % of the small→big gap the loop recovers. |
+The point: you get **higher-quality, auditable structured output from a *small*
+model**, trading a few extra passes (latency) for accuracy — no extra parameters,
+no special mathematics, no cloud. It runs on a laptop, and the deterministic parts
+run **with no model at all**.
 
-The "exact analysis" is standard graph analysis (reachability, cycles,
-terminals); a finite-field spectral fingerprint is included as an *optional*
-extra (and powers the M3 non-injective-readout refusal demo). It is honestly
-redundant with graph analysis for most workflow audits — keep it or drop it.
-
-## Run it (local — no GPU, no cloud)
+## Quickstart (works with no model)
 
 ```bash
-pip install -r requirements.txt          # networkx, numpy (stdlib does the rest)
-# install Ollama (https://ollama.com) and pull a small model:
+pip install llm-feedback-control      # zero dependencies — pulls nothing else
+```
+
+```python
+from llm_feedback_control import run_audit
+
+r = run_audit("A claim enters Intake. From Intake it goes to Triage. "
+              "Triage goes to FastTrack or to Investigation.")
+print(r["result"])         # OK
+print(r["report_facts"])   # terminals, loops, unreachable steps — all checked
+```
+
+That already works on a bare install: with no model reachable it uses a
+deterministic regex extractor plus exact graph analysis. **Plug in a model and the
+extraction quality goes up — nothing else changes.**
+
+From the command line:
+
+```bash
+lfc "A ticket opens in New. New goes to Assigned. Assigned goes to Resolved."
+lfc --check        # tells you exactly what backend is available and what to do
+lfc --demo         # runs the three worked demos
+```
+
+### Add a model (optional, recommended)
+
+The library is **not tied to any provider.** Three ways to give it a model:
+
+```bash
+# 1. Local, free, private — install Ollama (https://ollama.com), then:
 ollama pull phi3:mini
 
-python auditor.py            # M1/M2/M3 + gate hardening
-python quality_uplift.py     # open-loop vs closed-loop
-python feedback.py           # the positive-feedback loop recovering a dropped branch
-python hard_corpus.py        # small vs ceiling on hard inputs
+# 2. OpenAI (stdlib HTTP, no SDK):
+export CEILING_BACKEND=openai OPENAI_API_KEY=sk-...
 ```
 
-Configuration (env vars; see `llm.py`):
-
-```
-OLLAMA_HOST      default http://localhost:11434
-LFC_MODEL        the small model under test           (default phi3:mini)
-LFC_CEILING      a bigger local Ollama ceiling model  (default llama3.1:8b)
-CEILING_BACKEND  "ollama" (default) or "openai"
-OPENAI_API_KEY   required iff CEILING_BACKEND=openai   (OPENAI_MODEL default gpt-4o-mini)
+```python
+# 3. Bring your own: pass any callable f(prompt, fmt=None) -> str
+def my_llm(prompt, fmt=None):
+    ...                       # call Anthropic, a local server, anything
+run_audit(text, generate=my_llm)
 ```
 
-A small model runs comfortably on CPU — **no EC2/GPU is needed for this work.**
-The only thing that benefits from a bigger box is hosting a large *ceiling*
-model fast; the ceiling is optional, and an API call serves the same purpose.
+Run `lfc --check` any time to see what's wired up.
+
+## How it works — "feedback control", explained
+
+The design is borrowed from **electronics.** A raw LLM is like a very high-gain
+amplifier: hugely powerful, but left to run "open-loop" it overshoots — fluent,
+yet it drifts and hallucinates. Engineers tame such an amplifier by adding a
+**feedback loop**: feed the output back, compare it against a stable reference,
+and trade some raw power for precision and stability. This library is that
+feedback loop for an LLM. The "reference" is plain deterministic code — graph
+checks and schema rules — that the model's output is measured against.
+
+There are two kinds of feedback, and the library uses both:
+
+### Negative feedback — the stabilising checks (`run_audit`)
+
+This is the half that *grounds and refuses*. In plain terms:
+
+| step | what it means |
+|---|---|
+| **regime gate** | First decide whether the text is even the kind of thing we can analyse exactly (a finite, step-by-step process) versus something fuzzy and continuous. Refuse the fuzzy ones. |
+| **extraction + schema** | Ask the model for the state machine, but force the answer into a strict shape — and fall back to a deterministic regex extractor if it won't comply (or if there's no model). |
+| **exact analysis** | Compute provable facts about the graph: dead ends, loops, unreachable steps. (Plus an *optional* finite-field "spectral fingerprint" — see below.) |
+| **grounded report** | Write the summary using only those verified facts, naming only real states. |
+| **explicit refusal** | When the input is out of regime, or a result can't be made exact, say so — don't guess. |
+
+### Positive feedback — the gap-filling loop (`extract_iterative`)
+
+A one-shot extraction often silently **drops a branch** — the model says "OK"
+while quietly missing *Investigation → Denied*. Positive feedback fixes that: it
+**re-asks the model about anything the source text mentions that's missing from
+the answer**, and repeats until nothing is missing (a *fixed point*).
+
+Positive feedback is where capability *and* instability both live, so it's bounded
+by two negative-feedback safeguards: a deterministic consistency check (does the
+graph cover everything the text mentions?) and a **refusal clamp** — if it can't
+converge within a few passes, it refuses to report a confident-but-incomplete
+result rather than running away. This **refusal-as-stabilizer** is what makes the
+regenerative loop safe.
+
+## What's measured so far
+
+Indicative results, not benchmarks — small corpora, a 3.8B local model
+(`phi3:mini`), greedy decoding. See [`docs/results.md`](docs/results.md) for the
+full tables and method.
+
+**Headline (run on EC2 against a ~28 GB ceiling model, mixtral 8x7B):** on a
+messy, branchy, distractor-laden workflow corpus, the small model **+ the feedback
+loop essentially matches a model ~7× its size.**
+
+| configuration | states F1 | transitions F1 |
+|---|---|---|
+| small model (phi3:mini), one-shot | 0.98 | 0.89 |
+| **small model + feedback loop** | **1.00** | **0.90** |
+| big ceiling model (mixtral, ~28 GB), one-shot | 1.00 | 0.91 |
+
+→ the loop recovers **100%** of the small→big gap on states and **77%** on
+transitions — and on several individual workflows the closed-loop small model
+*beat* the big model, because the deterministic reference catches edges that raw
+fluency invents or drops.
+
+Other measured pieces: extraction states precision/recall ≈ 1.00 / 0.92; the
+regime gate scores 1.00 precision/recall separating finite from continuous on a
+clean corpus (it's brittle on deliberately *mixed* inputs — an open problem).
+
+## Documentation
+
+| doc | contents |
+|---|---|
+| [`docs/index.md`](docs/index.md) | overview and where to start |
+| [`docs/architecture.md`](docs/architecture.md) | the op-amp model in depth; the pipeline; refusal-as-stabilizer |
+| [`docs/usage.md`](docs/usage.md) | install, the API, the CLI, configuration, bring-your-own-backend |
+| [`docs/results.md`](docs/results.md) | the measured results, method, and honest scope |
+| [`docs/api.md`](docs/api.md) | reference for every public function |
+| [`docs/faq.md`](docs/faq.md) | "do I need a GPU?", "what models?", "does it work offline?" … |
+
+## Repository layout
+
+```
+src/llm_feedback_control/   the package (zero-dependency, pure standard library)
+  llm.py                    the LLM client + injectable backend + a doctor()
+  auditor.py                the negative-feedback pipeline (run_audit)
+  feedback.py               the bounded positive-feedback loop (extract_iterative)
+  __main__.py               the `lfc` command-line tool
+experiments/                repro scripts for the measured results (not shipped)
+aws/                        optional: run a large ceiling model on EC2 (not shipped)
+docs/                       the documentation suite
+tests/                      deterministic tests (no model / no network)
+```
 
 ## Honest scope
 
-- **A reliability architecture, not a model improvement.** The win is "the
-  system knows what it can compute exactly and refuses the rest" — orthogonal
-  to model scale. It helps on the *structured / verifiable slice* (workflows,
-  state machines, configs), not open-ended generation.
+- **A reliability architecture, not a model improvement.** The win is "the system
+  knows what it can compute exactly and refuses the rest" — orthogonal to model
+  scale. It helps on the *structured / verifiable slice* (workflows, state
+  machines, configs), not open-ended generation.
 - **It uses no special mathematics.** The deterministic reference is plain
-  graph/text consistency. (The optional finite-field fingerprint is just an
-  extra exact check, not the source of value.)
-- **Needs a deterministic reference.** Where there's nothing to check against,
-  the gate (correctly) refuses to claim exactness.
+  graph/text consistency. (The finite-field "spectral fingerprint" is an *optional*
+  extra exact check, honestly redundant with graph analysis for most workflow
+  audits — keep it or ignore it.)
+- **Needs a deterministic reference.** Where there's nothing to check against, the
+  gate (correctly) refuses to claim exactness.
+- **Results are indicative.** Small corpora; treat the numbers as direction, not
+  guarantees.
 
 ## Origin
 
@@ -99,3 +190,8 @@ This project is the practical, validated spin-off of an internal research
 investigation. The investigation's grander mathematical claims did not hold up
 under measurement; this engineering architecture — LLM feedback control with
 refusal-as-stabilizer — is the part that did. It stands on its own.
+
+## License
+
+MIT with an attribution clause — see [`LICENSE`](LICENSE).
+Built with llm-feedback-control by Edward Chalk (sapientronic.ai).

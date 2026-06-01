@@ -1,12 +1,11 @@
-"""feedback.py — the bounded POSITIVE-feedback loop (the op-amp "close the loop").
+"""The bounded POSITIVE-feedback loop (the op-amp "close the loop").
 
-Negative feedback (gate / ground / refuse) was validated in auditor.py: it
-stabilises, but it checks FORM, not COMPLETENESS — M1's extraction silently
-dropped the 'Refund' branch and the system still said "OK".
+Negative feedback (gate / ground / refuse) is validated in auditor.py: it
+stabilises, but it checks FORM, not COMPLETENESS — a one-shot extraction can
+silently drop a branch and the system still says "OK".
 
-This adds the regenerative loop that fixes that, and it deliberately uses a
-reference that needs NONE of the special mathematics — just deterministic
-text<->graph consistency:
+This adds the regenerative loop that fixes that, using a reference that needs
+NONE of the special mathematics — just deterministic text<->graph consistency:
 
     extract (LLM)  ->  consistency_gaps(text, graph)  [deterministic reference]
         ^                                   |
@@ -17,19 +16,13 @@ and an iteration cap with a REFUSAL clamp (if it can't converge, say so — do
 NOT report a confident-but-incomplete result). That refusal clamp is the
 stability bound that keeps the regenerative loop from running away.
 
-The point: this is "LLM feedback control" — and it works with no special
-mathematics at all. The reference is plain regex graph consistency.
-
-Requires: Ollama (a small model, e.g. phi3:mini), via llm.gen.  Run: python feedback.py
+The reference is plain regex graph consistency — so the "LLM feedback control /
+refusal-as-stabilizer" discipline stands on its own, with no special math.
+The LLM backend is injectable via ``generate`` (defaults to llm.gen).
 """
-import sys, re, json
-from llm import gen
-from auditor import valid, fallback_extract, norm
-
-try:
-    sys.stdout.reconfigure(encoding="utf-8")
-except Exception:
-    pass
+import re, json
+from .llm import gen
+from .auditor import valid, fallback_extract, norm
 
 STOP = {"If", "The", "A", "An", "After", "Once", "When", "Otherwise", "It", "Then"}
 
@@ -63,14 +56,21 @@ def consistency_gaps(text, graph):
     return miss_s, miss_t
 
 
-def extract_iterative(text, max_iters=4, verbose=True):
+def extract_iterative(text, max_iters=4, verbose=True, generate=None):
     """Positive-feedback extraction: re-prompt on deterministic gaps until a
-    fixed point, bounded by max_iters + a refusal clamp."""
+    fixed point, bounded by ``max_iters`` + a refusal clamp.
+
+    Returns ``(graph, initial, history, converged)``: the final graph, the
+    open-loop iter-0 snapshot, a per-iteration history, and whether it
+    converged to a clean fixed point (no residual gaps). Pass ``generate`` to
+    use a specific LLM backend; with no model it returns the deterministic
+    extraction unchanged (history length 1)."""
+    g = generate or gen
     # iteration 0: plain extraction
     try:
-        raw = gen('Extract the finite state machine. Return ONLY JSON '
-                  '{{"states":[...],"transitions":[["FROM","TO"],...]}} using exact state '
-                  f'names from the text. Text: "{text}"', fmt="json")
+        raw = g('Extract the finite state machine. Return ONLY JSON '
+                '{"states":[...],"transitions":[["FROM","TO"],...]} using exact state '
+                f'names from the text. Text: "{text}"', fmt="json")
         graph = json.loads(raw)
         if not (valid(graph) and graph.get("states")):
             graph = fallback_extract(text)
@@ -92,12 +92,12 @@ def extract_iterative(text, max_iters=4, verbose=True):
         # positive feedback: re-prompt with the deterministic gaps
         gaps_txt = (f"missing states: {miss_s}; missing transitions: {miss_t}")
         try:
-            raw = gen('Here is a state machine you extracted, and a list of items the '
-                      'source text mentions that are MISSING from it. Return the COMPLETE '
-                      'corrected machine as JSON {{"states":[...],"transitions":[["FROM","TO"],...]}}, '
-                      'adding the missing items (and their transitions) using exact names. '
-                      f'Current: {json.dumps({"states": graph["states"], "transitions": graph["transitions"]})}. '
-                      f'Missing per the text: {gaps_txt}. Source text: "{text}"', fmt="json")
+            raw = g('Here is a state machine you extracted, and a list of items the '
+                    'source text mentions that are MISSING from it. Return the COMPLETE '
+                    'corrected machine as JSON {"states":[...],"transitions":[["FROM","TO"],...]}, '
+                    'adding the missing items (and their transitions) using exact names. '
+                    f'Current: {json.dumps({"states": graph["states"], "transitions": graph["transitions"]})}. '
+                    f'Missing per the text: {gaps_txt}. Source text: "{text}"', fmt="json")
             ng = json.loads(raw)
             if valid(ng) and ng.get("states"):
                 # check it actually changed (avoid stalling)
@@ -144,9 +144,7 @@ def main():
   one-shot negative-feedback pass could not — it amplified toward completeness.
 - It was made SAFE by two negative-feedback bounds: a deterministic fixed-point
   reference (text<->graph consistency) and a refusal clamp on non-convergence.
-- The reference uses ZERO special mathematics — just regex graph consistency. So
-  the 'LLM feedback control / refusal-as-stabilizer' discipline stands entirely
-  on its own, whether or not any special mathematics is used.""")
+- The reference uses ZERO special mathematics — just regex graph consistency.""")
 
 
 if __name__ == "__main__":

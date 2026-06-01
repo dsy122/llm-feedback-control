@@ -18,9 +18,8 @@ This is the experiment worth running on a box where the bigger model is fast
 Run:  python hard_corpus.py
 """
 import sys, json, time, statistics as st
-import llm
-from feedback import extract_iterative, norm
-from auditor import valid, fallback_extract
+import llm_feedback_control as llm
+from llm_feedback_control import extract_iterative, norm, valid, fallback_extract
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")

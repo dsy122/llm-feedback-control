@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-feedback-control"
+dynamic = ["version"]
+description = "Reliable, checkable structured output from a small local LLM, by wrapping it in a deterministic feedback loop: a regime gate + exact graph analysis + explicit refusal, plus a bounded re-extraction loop. Zero runtime dependencies; runs with no model at all."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Edward Chalk", email = "edward.chalk@sapientronic.ai" },
+]
+keywords = [
+    "llm",
+    "feedback-control",
+    "structured-extraction",
+    "state-machine",
+    "workflow",
+    "hallucination",
+    "reliability",
+    "ollama",
+    "small-language-model",
+    "auditable",
+    "refusal",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+]
+# No third-party runtime dependencies: the core is pure standard library.
+dependencies = []
+
+[project.optional-dependencies]
+# An external LLM is NOT a pip dependency — install Ollama (https://ollama.com)
+# separately, or pass your own generate=... callable (e.g. an OpenAI client).
+aws = ["boto3>=1.26"]            # only for the optional EC2 ceiling-model tooling in aws/
+dev = ["pytest>=7.0", "build>=1.0", "twine>=4.0"]
+
+[project.urls]
+Homepage  = "https://github.com/pcoz/llm-feedback-control"
+Repository = "https://github.com/pcoz/llm-feedback-control"
+Issues    = "https://github.com/pcoz/llm-feedback-control/issues"
+Changelog = "https://github.com/pcoz/llm-feedback-control/blob/main/CHANGELOG.md"
+
+[project.scripts]
+lfc = "llm_feedback_control.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "llm_feedback_control.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["llm_feedback_control*"]
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = ["-ra"]

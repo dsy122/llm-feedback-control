@@ -17,7 +17,7 @@ The reference uses NO special mathematics (plain regex consistency), so this tes
 Requires: Ollama (phi3:mini).  Run:  python quality_uplift.py
 """
 import sys, statistics as st
-from feedback import extract_iterative, norm
+from llm_feedback_control import extract_iterative, norm
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")

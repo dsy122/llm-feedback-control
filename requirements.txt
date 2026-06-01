@@ -1,12 +1,17 @@
-# Core (the experiments): pure-Python + these two.
-networkx>=3.0
-numpy>=1.24
-
-# The LLM client (llm.py) uses only the standard library (urllib) to talk to
-# a local Ollama server and/or the OpenAI API — no SDK needed.
+# llm-feedback-control has ZERO third-party runtime dependencies.
+# The core (the package in src/) uses only the Python standard library, so:
 #
-# External requirement (not pip): Ollama (https://ollama.com) with a small
-# model pulled, e.g.:  ollama pull phi3:mini
+#     pip install llm-feedback-control
 #
-# The aws/ tooling (optional, for running a large ceiling model on EC2) needs
-# boto3 — install separately:  pip install boto3
+# pulls nothing else, and the deterministic pipeline runs immediately.
+#
+# To use the LLM path you need a model REACHABLE at runtime — this is NOT a pip
+# dependency. Either:
+#   * install Ollama (https://ollama.com) and pull a small model:
+#         ollama pull phi3:mini
+#   * or set CEILING_BACKEND=openai with OPENAI_API_KEY (stdlib HTTP, no SDK),
+#   * or pass your own generate=... callable to any entry point.
+#
+# Optional extras (see pyproject.toml):
+#   pip install "llm-feedback-control[aws]"   # boto3, for the EC2 tooling in aws/
+#   pip install "llm-feedback-control[dev]"   # pytest, build, twine

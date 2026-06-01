@@ -2,6 +2,16 @@ __pycache__/
 *.pyc
 .env
 *.pem
+
+# Build / packaging artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+.pytest_cache/
+.coverage
+htmlcov/
+
 # Per-developer cloud infra (account-specific config, instance ids, keys).
 # Shared out-of-band, not committed — same convention as the source harness.
 aws/.instance_id

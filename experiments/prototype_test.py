@@ -17,7 +17,7 @@ Requires: Ollama running with phi3:mini.  Run:  python prototype_test.py
 """
 import sys, json, re, time
 
-from llm import gen
+from llm_feedback_control import gen
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
