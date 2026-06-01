@@ -1,4 +1,4 @@
-# llm-feedback-control
+# LLM Feedback Control
 
 **Reliable, checkable structured data out of a small, local language model — by
 wrapping it in deterministic feedback.**
