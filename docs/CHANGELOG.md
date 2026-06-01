@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3] — 2026-06-01
+
+Documentation only — no code changes.
+
+- Reframed the docs **general-first**: lead with what the engine does (verify
+  against a deterministic reference / fill gaps / refuse), with extraction
+  **targets as peers** — workflow is the first one shipped; form fields, records,
+  and entities are others the same loop handles. Supersedes the 0.1.2 framing,
+  which still centred workflows and bolted generality on as an afterthought.
+- Stopped trivialising the deterministic reference — it's the substantive
+  component, not "a bit of code". Positive phrasing throughout.
+
 ## [0.1.2] — 2026-06-01
 
 Documentation only — no code changes.
