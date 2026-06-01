@@ -1,4 +1,4 @@
-# Usage
+# Getting started
 
 ## Install
 
@@ -205,7 +205,7 @@ network call — handy for tests and offline use.
 
 The same code runs unchanged on a laptop and on a remote box — only these env vars
 differ. (The `gen_ceiling` "ceiling model" is used by the experiments to measure a
-small model against a much larger one; see [results.md](results.md).)
+small model against a much larger one; see [Results](04-results.md).)
 
 ## Error handling
 

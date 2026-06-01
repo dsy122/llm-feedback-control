@@ -5,8 +5,8 @@ small, hand-built corpus and a single small model with greedy decoding. The poin
 is to show the *shape* of the effect — that closing the loop measurably improves a
 small model's structured output — not to claim a leaderboard position.
 
-All experiments are reproducible from the scripts in [`../experiments/`](../experiments),
-which are configured entirely by environment variable (see [usage.md](usage.md)).
+All experiments are reproducible from the scripts in [`../../experiments/`](../../experiments),
+which are configured entirely by environment variable (see [Getting started](01-getting-started.md)).
 
 ## 1. Headline: a small model reaching a big one
 
@@ -98,4 +98,4 @@ python experiments/hard_corpus.py         # small vs ceiling (set LFC_CEILING)
 
 To reproduce the headline against a large ceiling model without a big local GPU,
 the `aws/` tooling provisions an EC2 instance, caches the model on S3, and runs
-`hard_corpus.py` there; see the scripts in [`../aws/`](../aws).
+`hard_corpus.py` there; see the scripts in [`../../aws/`](../../aws).

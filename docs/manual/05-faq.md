@@ -22,7 +22,7 @@ and the ceiling is optional (it's used to measure a small model against a big on
 Anything. Out of the box it talks to a local **Ollama** model. Set
 `CEILING_BACKEND=openai` to use the **OpenAI** API (no SDK — stdlib HTTP). Or pass
 your own `generate=` callable (`f(prompt, fmt=None) -> str`) to use Anthropic, a
-local server, or any endpoint. See [usage.md](usage.md).
+local server, or any endpoint. See [Getting started](01-getting-started.md).
 
 ### Why is the output sometimes "REFUSED"?
 
@@ -34,11 +34,11 @@ That's the system working as designed. It refuses when:
 - the positive-feedback loop couldn't converge within its cap.
 
 A refusal with a reason is more useful than a confident guess. See
-[architecture.md](architecture.md) §5, "refusal-as-stabilizer".
+[How it works](02-how-it-works.md) §5, "refusal-as-stabilizer".
 
 ### What does "feedback control" mean here? Is this control theory / electronics?
 
-It's an **analogy**, explained in full in [architecture.md](architecture.md). In
+It's an **analogy**, explained in full in [How it works](02-how-it-works.md). In
 short: a raw LLM behaves like a high-gain amplifier (fluent but drifts); wrapping it
 in a deterministic "feedback loop" trades some fluency for precision and
 auditability, exactly as negative feedback tames an op-amp. You don't need any
@@ -75,10 +75,10 @@ library itself never needs it.
 It's an early (0.1.x), honestly-scoped release. The architecture and the
 deterministic core are solid and tested; the measured results are *indicative* on
 small corpora, and the "mixed"-regime classifier is the known weak spot (see
-[results.md](results.md)). Treat it as a reliable building block for the structured,
+[Results](04-results.md)). Treat it as a reliable building block for the structured,
 verifiable slice — not a turnkey general extractor.
 
 ### How do I reproduce the numbers in the README?
 
-See [results.md](results.md) §5. The scripts live in
-[`../experiments/`](../experiments).
+See [Results](04-results.md) §5. The scripts live in
+[`../../experiments/`](../../experiments).

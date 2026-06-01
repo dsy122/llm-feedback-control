@@ -79,7 +79,7 @@ Clear cases are decided by a cheap keyword heuristic; genuinely ambiguous cases
 consult the LLM. **Model-only input is refused** — the system will not pretend a
 continuous process is a state machine. (This gate is the most heuristic part of
 the system and is brittle on deliberately *mixed* inputs; see
-[results.md](results.md).)
+[Results](04-results.md).)
 
 ### 3.2 Extraction with a schema and a fallback
 
