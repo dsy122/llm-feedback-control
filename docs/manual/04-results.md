@@ -1,3 +1,5 @@
+[← API reference](03-api-reference.md) · [Manual home](../index.md) · [Worked examples →](05-examples.md)
+
 # Results
 
 **Read this as direction, not as a benchmark.** Every number below comes from a
@@ -99,3 +101,7 @@ python experiments/hard_corpus.py         # small vs ceiling (set LFC_CEILING)
 To reproduce the headline against a large ceiling model without a big local GPU,
 the `aws/` tooling provisions an EC2 instance, caches the model on S3, and runs
 `hard_corpus.py` there; see the scripts in [`../../aws/`](../../aws).
+
+---
+
+[← API reference](03-api-reference.md) · [Manual home](../index.md) · [Worked examples →](05-examples.md)

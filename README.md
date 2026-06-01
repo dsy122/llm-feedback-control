@@ -53,8 +53,8 @@ The full **user manual** is in [`docs/`](docs/index.md):
 | [How it works](docs/manual/02-how-it-works.md) | the op-amp model: negative/positive feedback, refusal-as-stabilizer, the general engine |
 | [API reference](docs/manual/03-api-reference.md) | every public function |
 | [Results](docs/manual/04-results.md) | measured numbers, method, honest scope |
-| [Worked examples](docs/manual/06-examples.md) | actual run transcripts |
-| [FAQ](docs/manual/05-faq.md) | GPU? models? offline? why did it refuse? |
+| [Worked examples](docs/manual/05-examples.md) | actual run transcripts |
+| [FAQ](docs/manual/06-faq.md) | GPU? models? offline? why did it refuse? |
 | [Changelog](docs/CHANGELOG.md) | release history |
 
 ## Install

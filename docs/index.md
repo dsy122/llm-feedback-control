@@ -73,11 +73,11 @@ the difference between the stabilising "negative" feedback and the gap-filling
 "positive" feedback, and why refusal is the thing that keeps the latter safe.
 
 When you need to look something up, the **[API reference](manual/03-api-reference.md)**
-documents every public function and the **[FAQ](manual/05-faq.md)** answers the common
+documents every public function and the **[FAQ](manual/06-faq.md)** answers the common
 practical questions — whether you need a GPU, whether it works offline, why it
 sometimes refuses. The **[Results](manual/04-results.md)** chapter reports what has
 actually been measured, honestly and with its limitations, and
-**[Worked examples](manual/06-examples.md)** walks through real transcripts from real
+**[Worked examples](manual/05-examples.md)** walks through real transcripts from real
 runs, including the small model reaching the quality of a far larger one and a form
 extraction catching a hallucinated value.
 

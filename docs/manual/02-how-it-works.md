@@ -1,3 +1,5 @@
+[← Getting started](01-getting-started.md) · [Manual home](../index.md) · [API reference →](03-api-reference.md)
+
 # Architecture: the operational-amplifier model
 
 This document explains the idea behind the library from scratch. No electronics
@@ -201,3 +203,7 @@ This is realised in code: both targets run on one public engine, `loop.feedback_
 whose extractor and reference are **injectable** (the LLM backend already is, via
 `generate=`). A new target is "bring a schema + a reference and call `feedback_loop`",
 not a fork.
+
+---
+
+[← Getting started](01-getting-started.md) · [Manual home](../index.md) · [API reference →](03-api-reference.md)

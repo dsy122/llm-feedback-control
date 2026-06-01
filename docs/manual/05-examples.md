@@ -1,3 +1,5 @@
+[← Results](04-results.md) · [Manual home](../index.md) · [FAQ →](06-faq.md)
+
 # Worked examples
 
 Actual transcripts from real runs (small local models, plus one large-model
@@ -148,3 +150,7 @@ python experiments/hard_corpus.py                       # example 2 (set LFC_CEI
 
 Examples 3–4 use the form harness from the development exploration; the package API
 shown in §4 reproduces them directly.
+
+---
+
+[← Results](04-results.md) · [Manual home](../index.md) · [FAQ →](06-faq.md)

@@ -1,3 +1,5 @@
+[← How it works](02-how-it-works.md) · [Manual home](../index.md) · [Results →](04-results.md)
+
 # API reference
 
 Everything below is importable directly from the top-level package:
@@ -162,3 +164,7 @@ currency, date, custom pattern); other fields are `None`.
 
 More internals (`detect`, `validate`, `_snap_detectable`) live in
 `llm_feedback_control.forms` for power users building a custom form reference.
+
+---
+
+[← How it works](02-how-it-works.md) · [Manual home](../index.md) · [Results →](04-results.md)

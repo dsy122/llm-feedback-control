@@ -1,3 +1,5 @@
+[← Worked examples](05-examples.md) · [Manual home](../index.md)
+
 # FAQ
 
 ### Does it work without a language model?
@@ -82,3 +84,7 @@ verifiable slice — not a turnkey general extractor.
 
 See [Results](04-results.md) §5. The scripts live in
 [`../../experiments/`](../../experiments).
+
+---
+
+[← Worked examples](05-examples.md) · [Manual home](../index.md)

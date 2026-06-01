@@ -1,3 +1,5 @@
+[Manual home](../index.md) · [How it works →](02-how-it-works.md)
+
 # Getting started
 
 ## Install
@@ -80,10 +82,10 @@ lfc                 # with no text, audits a built-in sample
 
 ## The Python API
 
-### `run_audit(text, *, generate=None) -> dict`
+### `run_audit` — audit a process end to end
 
-The full negative-feedback pipeline: gate → extract → exact analysis → grounded
-report, with explicit refusals. Returns a dict:
+The full pipeline: gate → extract → exact analysis → grounded report, with explicit
+refusals. Returns a dict:
 
 ```python
 r = run_audit("A claim enters Intake. From Intake it goes to Triage. "
@@ -105,9 +107,9 @@ run_audit("Sentiment improves gradually as trust accumulates.")["result"]
 # "REFUSED: model-only regime; no exact finite-structural analysis."
 ```
 
-### `extract_iterative(text, *, max_iters=4, verbose=True, generate=None)`
+### `extract_iterative` — the bounded feedback loop
 
-The bounded positive-feedback loop. Returns `(graph, initial, history, converged)`:
+Returns `(graph, initial, history, converged)`:
 
 ```python
 from llm_feedback_control import extract_iterative
@@ -123,10 +125,9 @@ converged    # True iff it reached a clean fixed point; False -> refusal clamp f
 `converged is False` means the loop hit its iteration cap with residual gaps — the
 **refusal clamp**. Treat that result as "incomplete, do not trust as final".
 
-### `extract_form(text, schema, *, generate=None, max_iters=4, verbose=False)`
+### `extract_form` — form-field extraction
 
-The second built-in target: form-field extraction, verified against a schema and the
-source text.
+The second built-in target, verified against a schema and the source text.
 
 ```python
 from llm_feedback_control import extract_form
@@ -214,3 +215,7 @@ is reachable. The high-level functions (`run_audit`, `extract_iterative`,
 `regime_gate`, …) **catch this internally and fall back** to the deterministic
 path, so a missing model degrades gracefully rather than crashing. You only need to
 handle `BackendError` if you call `gen` / `gen_ceiling` yourself.
+
+---
+
+[Manual home](../index.md) · [How it works →](02-how-it-works.md)
