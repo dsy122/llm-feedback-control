@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.3.0] — 2026-06-07
+
+New feature — **the controller seat is now pluggable, and the op-amp paradigm is
+made literal.** Fully **backward compatible**: everything is additive, no existing
+function changed its signature or behaviour, and the existing test suite passes
+unchanged. The deterministic core still runs with no model at all.
+
+- **LLM-as-critic controller** (`llm_critic_reference`, `llm_critic_repair`): a
+  low-power model can now sit in the feedback loop's *controller* seat (the
+  `reference`), catching fuzzy problems no deterministic rule was written for —
+  relevance, coherence, "did it actually answer the question". It is an *estimate*,
+  not a guarantee: degrade-safe (no model → no gaps), and meant to be paired with a
+  deterministic reference, never to replace it.
+- **`combine_references`** — a *summing junction*: combine several controllers so
+  the loop converges only when all are satisfied (keep an exact reference as the
+  floor and add a critic on top).
+- **`quorum_reference`** — an *instrumentation amp*: combine *independent* critics
+  by agreement, keeping only what a quorum raise and rejecting each critic's
+  idiosyncratic noise (common-mode rejection). Independence — different models — is
+  what makes it work.
+- **`cascade` / `loop_stage`** — a *multi-stage amplifier*: pipe one controlled
+  loop's output into the next, each stage exact-checked; a stage that refuses stops
+  the chain (the honest stop propagates).
+- **`schmitt_gate`** — a *comparator with hysteresis*: a sticky accept/refuse over a
+  stream of scores, with a dead-band so borderline inputs do not chatter.
+- New manual chapter, **Controllers and circuits** (`docs/manual/07-controllers-and-circuits.md`),
+  and API-reference entries for all of the above. New offline demos
+  (`python -m llm_feedback_control.critic`, `... .circuits`) that run with no model.
+
+The design law throughout: **keep at least one exact element in the loop.** The
+critic widens reach; the deterministic reference and the refusal clamp are what the
+guarantees still rest on.
+
 ## [0.2.4] — 2026-06-01
 
 Documentation and source comments only — no behaviour change.

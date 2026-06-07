@@ -1,4 +1,4 @@
-[← Worked examples](05-examples.md) · [Manual home](../index.md)
+[← Worked examples](05-examples.md) · [Manual home](../index.md) · [Controllers and circuits →](07-controllers-and-circuits.md)
 
 # FAQ
 
@@ -87,4 +87,4 @@ See [Results](04-results.md) §5. The scripts live in
 
 ---
 
-[← Worked examples](05-examples.md) · [Manual home](../index.md)
+[← Worked examples](05-examples.md) · [Manual home](../index.md) · [Controllers and circuits →](07-controllers-and-circuits.md)

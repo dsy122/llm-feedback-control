@@ -167,4 +167,55 @@ More internals (`detect`, `validate`, `_snap_detectable`) live in
 
 ---
 
+## Controllers and circuits
+
+Compositions of the loop primitives. See **[Controllers and circuits](07-controllers-and-circuits.md)**
+for the narrative and examples. All exported at the top level.
+
+### `llm_critic_reference(generate=None, *, rubric=None, model=None, max_gaps=8, verbose=False) -> reference`
+Build a feedback `reference` whose controller is a low-power LLM: it asks the model
+for specific, checkable problems with the candidate and returns them as a list of
+strings (empty == satisfied). An *estimate*, not a guarantee. If no model is
+reachable (or the reply won't parse) it returns no gaps — pair it with a
+deterministic reference if a missing model must not silently pass. `rubric` focuses
+the critique; `model` overrides the model name.
+
+### `llm_critic_repair(generate=None, *, model=None) -> repair`
+Build a `repair` that asks the model to revise the candidate to fix the critic's
+gaps, returning a corrected object of the same JSON shape — or `None` (which stops
+the loop, and fires the refusal clamp if gaps remain).
+
+### `combine_references(*references, dedup=True) -> reference`
+Summing junction: report the union of every sub-reference's gaps, so the loop
+converges only when **all** are satisfied. Put the deterministic (exact) reference
+first and a critic second to keep the guarantee as the floor. `dedup` drops repeated
+gaps (by string form), order preserved.
+
+### `quorum_reference(*references, quorum=None, similar=None, verbose=False) -> reference`
+Instrumentation amp: keep only the gaps that **at least `quorum`** references
+independently raise; reject single-reference gaps as noise (common-mode rejection).
+Built for *independent* critics (different models). `quorum` defaults to a majority,
+clamped to `[1, n]`; `combine_references` is the `quorum=1` extreme. `similar(a, b)
+-> bool` decides when two free-text gaps are the same issue (default: word-overlap;
+inject a stronger matcher for production).
+
+### `cascade(*stages, stop_on_refusal=True) -> run`
+Multi-stage amplifier. `run(x) -> (final, ok, trace)`: thread `x` through each stage,
+feeding one stage's output to the next. A "stage" is any callable
+`stage(input) -> (output, converged)`. `ok` is `True` iff every stage that ran
+converged; with `stop_on_refusal=True` a refusing stage halts the chain. `trace` has
+one `{"stage", "output", "converged"}` record per stage run.
+
+### `loop_stage(*, extract, reference, repair, signature, finalize=None, max_iters=4, label="stage") -> stage`
+Wrap a `feedback_loop` as a `cascade` stage: returns `stage(input) -> (output,
+converged)` running the loop with `input` as its source.
+
+### `schmitt_gate(low, high, *, start=False) -> classify`
+Comparator with hysteresis. Returns a stateful `classify(score) -> bool`: flips to
+`True` at/above `high`, back to `False` at/below `low`, and **holds** its last
+verdict between them (the dead-band) — so a borderline score does not chatter.
+Raises `ValueError` if `low > high`.
+
+---
+
 [← How it works](02-how-it-works.md) · [Manual home](../index.md) · [Results →](04-results.md)

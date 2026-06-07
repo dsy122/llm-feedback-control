@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "llm-feedback-control"
 dynamic = ["version"]
-description = "Reliable, checkable structured output from a small local LLM, by wrapping it in a deterministic feedback loop: a regime gate + exact graph analysis + explicit refusal, plus a bounded re-extraction loop. Zero runtime dependencies; runs with no model at all."
+description = "A control layer for LLM-in-the-loop reliability: wrap an unreliable generator in a verify-and-refuse feedback loop with a pluggable controller (deterministic checks, a model critic, or compositions) and composable 'circuits'. Keep one exact element in the loop and outputs are checked, corrected, or honestly refused. Zero runtime dependencies; runs with no model at all."
 readme = "README.md"
 requires-python = ">=3.8"
 license = { file = "LICENSE" }

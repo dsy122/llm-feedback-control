@@ -83,8 +83,19 @@ from .forms import (
     fallback_extract_form,
     field_gaps as form_field_gaps,
 )
+from .critic import (
+    llm_critic_reference,
+    llm_critic_repair,
+    combine_references,
+    quorum_reference,
+)
+from .circuits import (
+    cascade,
+    loop_stage,
+    schmitt_gate,
+)
 
-__version__ = "0.2.4"
+__version__ = "0.3.0"
 
 __all__ = [
     # headline
@@ -111,6 +122,15 @@ __all__ = [
     # form target
     "fallback_extract_form",
     "form_field_gaps",
+    # llm-as-critic controller
+    "llm_critic_reference",
+    "llm_critic_repair",
+    "combine_references",
+    "quorum_reference",
+    # op-amp circuits (compositions)
+    "cascade",
+    "loop_stage",
+    "schmitt_gate",
     # client
     "gen",
     "gen_ceiling",

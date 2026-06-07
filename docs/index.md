@@ -8,18 +8,25 @@ invent a detail that was never there or quietly drop one that was. For casual us
 that is tolerable. For anything you intend to rely on, "usually correct, and never
 tells you when it isn't" is a serious problem.
 
-LLM Feedback Control is a small library that solves this for one well-defined job:
-turning free text into structured data you can actually trust. It does not try to
-make the model itself cleverer. Instead it wraps the model in a layer of ordinary,
-deterministic code — a *reference* — that checks the model's work against something
-verifiable, asks it to fix what it got wrong, and, when it cannot confirm an answer,
-refuses to give one rather than guessing.
+LLM Feedback Control is a control layer for that problem — for any point where an
+LLM's output feeds a decision that has to be right. It does not try to make the model
+itself cleverer; it borrows the fix from control engineering and **closes a loop
+around the generator.** The loop pairs the model with a *reference* — something that
+can check its output — verifies the answer against it, asks the model to fix what it
+got wrong, and, when it cannot confirm a result, refuses to give one rather than
+guessing.
 
-The consequence is that the reliability comes from the checking, not from the size
-of the model. A small model you can run for free on your own laptop, wrapped this
-way, becomes dependable enough to use in earnest. In our own tests a
-3.8-billion-parameter model inside the loop matched the output of a model roughly
-seven times its size.
+The reliability comes from the loop, not from the size of the model — and the
+controller seat is pluggable. The reference can be deterministic code (an exact
+guarantee), a low-power model acting as a critic (for fuzzy quality no rule
+captures), or a composition of several; and the feedback blocks wire into "circuits"
+— a summing junction, an instrumentation amp, a multi-stage cascade, a hysteresis
+gate (see [Controllers and circuits](manual/07-controllers-and-circuits.md)). One
+rule holds it together: keep at least one exact element in the loop. Because the loop
+does the work, a small model you can run for free on your own laptop becomes
+dependable enough to use in earnest — in our own tests a 3.8-billion-parameter model
+inside the loop matched one roughly seven times its size, now a proof point rather
+than the whole story.
 
 ## How it works: wrapping the model in a feedback loop
 
@@ -80,6 +87,11 @@ actually been measured, honestly and with its limitations, and
 **[Worked examples](manual/05-examples.md)** walks through real transcripts from real
 runs, including the small model reaching the quality of a far larger one and a form
 extraction catching a hallucinated value.
+
+For the more advanced compositions — putting a low-power model in the controller
+seat, combining independent critics, and wiring feedback blocks into "circuits"
+(a summing junction, an instrumentation amp, a multi-stage cascade, a
+hysteresis gate) — see **[Controllers and circuits](manual/07-controllers-and-circuits.md)**.
 
 For the change history, see the **[Changelog](CHANGELOG.md)**; for the short version
 of all this, the **[project README](../README.md)**; and for the code itself, the
